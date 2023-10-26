@@ -1,5 +1,7 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
+{% block content %}
 <section class="banner-another"></section>
+
 <!-- About Section Start -->
 <div id="about-us">
   <div class="container">
@@ -9,20 +11,20 @@
           Register
         </h3>
         <form
-          action="/login"
+          action="/register_endpoint"
           method="POST"
           data-aos="fade-up"
           data-aos-delay="500"
         >
           <div class="form-group">
-            <label for="email">Full Name</label>
+            <label for="fullname">Full Name</label>
             <input
               type="text"
               class="form-control"
-              id="fullname"
-              name="fullname"
-              aria-describedby="fullname"
-              placeholder="Enter fullname"
+              id="name"
+              name="name"
+              aria-describedby="nameHelp"
+              placeholder="Enter Full Name"
             />
             <error class="text-danger">{{ fullname_error }}</error>
           </div>

@@ -1,27 +1,23 @@
-from fastapi import APIRouter, Request, Form, Depends
-from fastapi.templating import Jinja2Templates
-from app.database import Database
+from fastapi import APIRouter, HTTPException, Form, Request, Depends
 from fastapi.responses import RedirectResponse
+from app.models import User
+from app import db_session
 import bcrypt
+from pydantic import BaseModel
 
-templates = Jinja2Templates(directory="templates")
 router = APIRouter()
 
-async def login_handler(email: str = Form(...), password: str = Form(...)):
-    conn = Database.get_connection()
-    cur = conn.cursor()
-    print(email, password)
-    cur.execute("SELECT password FROM users WHERE email=%s", (email,))
-    record = cur.fetchone()
-    
-    if record and bcrypt.checkpw(password.encode("utf-8"), record[0].encode("utf-8")):
+async def login_handler(email: str, password: str):
+    user = db_session.query(User).filter_by(email=email).first()
+    if user and bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return {"message": "Logged in successfully"}
     else:
-        return {"error": "Invalid email or password."}
+        return {"error": "Invalid credentials"}
 
 @router.post("/login_endpoint")
 async def login(request: Request, email: str = Form(...), password: str = Form(...)):
     response = await login_handler(email, password)
     if "message" in response:
         return RedirectResponse(url="/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", {"request": request, "error": response["error"]})
+    else:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
