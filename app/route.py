@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException, Header
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
+from typing import Optional, Union
 from app.models import User
 from app.database import db_session
+from starlette.authentication import UnauthenticatedUser
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -15,9 +17,18 @@ async def home(request: Request):
 async def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
 
+def get_current_user_or_anonymous(authorization: Optional[str] = Header(None)) -> Union[User, UnauthenticatedUser]:
+    if not authorization:
+        return UnauthenticatedUser()
+
 @router.get("/login")
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+async def login_page(request: Request, user: User = Depends(get_current_user_or_anonymous)):
+    return templates.TemplateResponse("login.html", {"request": request, "user": user})
+
+def get_current_user_or_anonymous(authorization: Optional[str] = Header(None)) -> Union[User, UnauthenticatedUser]:
+    if not authorization:
+        return UnauthenticatedUser()
+    # Otherwise, retrieve and return the authenticated user based on the "authorization" header.
 
 async def login_handler(email: str, password: str):
     user = db_session.query(User).filter_by(email=email, password=password).first()
@@ -37,7 +48,7 @@ async def login(request: Request, email: str, password: str):
 
 @router.get("/dashboard")
 async def dashboard(request: Request):
-    user_data = {"username": "John"}  # Replace with actual logic
+    user_data = db_session.query(User).all()
     return templates.TemplateResponse("dashboard.html", {"request": request, "user": user_data})
 
 @router.get("/register")
