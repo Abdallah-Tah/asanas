@@ -8,8 +8,6 @@ from pydantic import BaseModel
 router = APIRouter()
 
 async def login_handler(email: str, password: str):
-    print(f"Received email: {email}")  # Debugging statement
-    print(f"Received password: {password}")  # Debugging statement
     user = db_session.query(User).filter_by(email=email).first()
     if user and bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return {"message": "Logged in successfully"}
@@ -18,11 +16,8 @@ async def login_handler(email: str, password: str):
 
 @router.post("/login_endpoint")
 async def login(request: Request, email: str = Form(...), password: str = Form(...)):
-    print(f"Received email: {email}")  # Debugging statement
-    print(f"Received password: {password}")  # Debugging statement
     response = await login_handler(email, password)
     if "message" in response:
         return RedirectResponse(url="/dashboard", status_code=302)
     else:
         raise HTTPException(status_code=400, detail="Invalid credentials")
-
